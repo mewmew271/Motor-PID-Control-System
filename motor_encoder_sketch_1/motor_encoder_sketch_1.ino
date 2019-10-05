@@ -13,10 +13,11 @@
 #define ENC_COUNT_REV 374
 
 // Encoder output to Arduino Interrupt pin
-#define ENC_IN 3 
+#define ENC_A 3
+#define ENC_B 2  
 
 // MD10C PWM connected to pin 10
-#define PWM 10 
+#define PWM 11 
 // MD10C DIR connected to pin 12
 #define DIR 12 
 
