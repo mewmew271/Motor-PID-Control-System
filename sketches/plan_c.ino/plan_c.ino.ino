@@ -1,4 +1,4 @@
-
+//sudo chmod a+rw /dev/ttyACM0
 #define ENC_COUNT_REV 4425.156
 
 ////PWM connected to pin 8
@@ -61,8 +61,9 @@ void loop(){
   float IdealRPM_float = (float)IdealRPM/100;
   
   vel = (float)(abs(newposition-oldposition) * 1000) /(newtime-oldtime);
+  
+  //fix the abs vel and the abs ActualRPM
   float ActualRPM = (float)(vel * 60 / ENC_COUNT_REV);
-  float ErrorRPM = abs(IdealRPM_float - ActualRPM);
   
   // Turn on motor A
   if (IdealRPM < 0) {
@@ -79,16 +80,17 @@ void loop(){
   analogWrite(enA, motor_pwm);
 
   // Calculate Ideal/Actual/Error Direction
-  String ActualDirection = "-";
-  if (newposition > oldposition){ ActualDirection = "+"; }
+  String ActualDirection = "+";
+  if (newposition > oldposition){ ActualDirection = "-"; ActualRPM=-ActualRPM;}
   String IdealDirection = "-";
-  if (IdealRPM < 0){ IdealDirection = "+"; }
-
+  if (IdealRPM > 0){ IdealDirection = "+"; }
   
+  float ErrorRPM = abs(IdealRPM_float - ActualRPM);
+
   //Log Data
   Serial.print ("T(Ideal|Actual) |");
   Serial.print ("Direction("+IdealDirection+"|"+ActualDirection+") | ");
-  Serial.print ("RPM("+IdealRPM+"|"+ActualRPM+"|e:"+ErrorRPM+") | ");
+  Serial.println ("RPM("+String(IdealRPM_float)+"|"+String(ActualRPM)+"|e:"+String(ErrorRPM)+") | ");
 
   //Update Prior States
   oldposition = newposition;
