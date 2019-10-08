@@ -29,6 +29,17 @@ float vel;
 // Variable for RPM measuerment
 float rpm = 0;
 
+//PID errors and times
+float ErrorRPM;
+float last_ErrorRPM = 0;
+float cumulative_error;
+float rateError;
+float PID;
+//PID constants
+double kp = 2
+double ki = 5
+double kd = 1
+
 void doEncoder()
 {
   if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
@@ -54,7 +65,13 @@ void setup(){
 void loop(){
   newposition = encoder0Pos;
   newtime = millis();
-
+  
+  //New PID stuff
+  elapsed_time = newtime - oldtime;
+  cumulative_error += ErrorRPM * elapsedTime;
+  rateError = (ErrorRPM - last_ErrorRPM)/elapsedTime;
+  PID = kp * ErrorRPM + ki * cumulative_error + kd * rateError;
+  
   // Calculate Ideal/Actual/Error RPM
   int PotInput = analogRead(SpeedControl1);//range 0 1023
   int IdealRPM = map(PotInput, 0, 1023, -2300, 2300);
