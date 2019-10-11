@@ -7,4 +7,3 @@ Foundations of Robotics project
 ### Schematic for System Structure
 ![system_structure](https://github.com/parisChatz/motor_pid_control/blob/master/system_structure.png "system_structure")
 ### RPMvsTorque 
-![rpmvstorque](https://github.com/parisChatz/motor_pid_control/blob/master/torque_vs_rpm.pdf "rpmvstorque")
