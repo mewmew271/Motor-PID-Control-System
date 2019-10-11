@@ -49,6 +49,23 @@ void doEncoder()
   }
 }
 
+/*
+//New encoder version. Might work better. 
+int encoder0PinALast = LOW;
+void doEncoderV2{
+  n = digitalRead(encoder0PinA);
+  if ((encoder0PinALast == LOW) && (n == HIGH)) {
+    if (digitalRead(encoder0PinB) == LOW) {
+      encoder0Pos--;
+    } 
+    else {
+      encoder0Pos++;
+    }
+  }
+  encoder0PinALast = n;
+}
+*/
+
 void setup(){
   
   pinMode(encoder0PinA, INPUT_PULLUP);
