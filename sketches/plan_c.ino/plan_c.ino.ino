@@ -1,33 +1,30 @@
 //sudo chmod a+rw /dev/ttyACM0
+
 #define ENC_COUNT_REV 4425.156
-
-////PWM connected to pin 8
-//#define PWM 8 
-////DIR connected to pin 9 and 10
-//#define DIR1 9  
-//#define DIR2 10
-
 // Encoder output to Arduino Interrupt pin 2 and 3
-#define encoder0PinA  2
-#define encoder0PinB  3
-
-
+const int encoder0PinA = 2;
+const int encoder0PinB = 3;
 // Motor A
-int enA = 8; //enA= PWM
-int in1 = 9;
-int in2 = 10;
-
+const int enA = 8; //enA=PWM
+const int in1 = 9; //DIR1
+const int in2 = 10;//DIR2
 //pot 
-int SpeedControl1 = A0;
+const int SpeedControl1 = A0;
+
 
 volatile long encoder0Pos=0;
+
+//Position Variables
 long newposition;
 long oldposition = 0;
+
+//Time Variables
 unsigned long newtime;
 unsigned long oldtime = 0;
+
+//Speed Variables
 float vel;
-// Variable for RPM measuerment
-float rpm = 0;
+float rpm;
 
 //PID errors and times
 float ErrorRPM;
@@ -35,10 +32,11 @@ float last_ErrorRPM = 0;
 float cumulative_error;
 float rateError;
 float PID;
+
 //PID constants
-double kp = 2
-double ki = 5
-double kd = 1
+double kp = 1;
+double ki = 1;
+double kd = 1;
 
 void doEncoder()
 {
@@ -52,7 +50,8 @@ void doEncoder()
 /*
 //New encoder version. Might work better. 
 int encoder0PinALast = LOW;
-void doEncoderV2{
+
+void doEncoderV2(){
   n = digitalRead(encoder0PinA);
   if ((encoder0PinALast == LOW) && (n == HIGH)) {
     if (digitalRead(encoder0PinB) == LOW) {
@@ -63,6 +62,49 @@ void doEncoderV2{
     }
   }
   encoder0PinALast = n;
+}
+*/
+
+/* Debounce function
+boolean debounceButton(boolean state){
+  boolean stateNow = digitalRead(button);
+  if(state!=stateNow)
+  {
+    delay(20);
+    stateNow = digitalRead(button);
+  }
+  return stateNow;  
+}
+*/
+
+/*
+//Direction Change
+int rotDirection = 0;
+boolean pressed = LOW;
+
+//MOVE TO void setup()
+//pinMode(button, INPUT); 
+//Set initial rotation direction
+//digitalWrite(in1, LOW);
+//digitalWrite(in2, HIGH);
+
+void dirChange(){
+  //debounceButton Function
+  pressed = debounceButton(button);
+  // If button is pressed - change rotation direction
+  if (pressed == true  & rotDirection == 0) {
+    digitalWrite(in1, HIGH);
+    digitalWrite(in2, LOW);
+    rotDirection = 1;
+    delay(20);
+  }
+  // If button is pressed - change rotation direction
+  if (pressed == false & rotDirection == 1) {
+    digitalWrite(in1, LOW);
+    digitalWrite(in2, HIGH);
+    rotDirection = 0;
+    delay(20);
+  }
 }
 */
 
