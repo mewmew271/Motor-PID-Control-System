@@ -1,4 +1,5 @@
 //sudo chmod a+rw /dev/ttyACM0
+//368.763:1 gear ratio
 
 #define ENC_COUNT_REV 4425.156
 // Encoder output to Arduino Interrupt pin 2 and 3
