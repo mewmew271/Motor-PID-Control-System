@@ -5,26 +5,27 @@
 
 // Encoder output to Arduino Interrupt pin 2 and 3.
 //Actually 1 interrupt only is needed.
-#define encoder0PinA  2
-#define encoder0PinB  3
+const int encoder0PinA = 2
+const int encoder0PinB = 3
 
 
 // Numbers of pins for motor control
-int PWMduty = 8; 
-int HBridge1 = 9;
-int HBridge2 = 10;
+const int PWMduty = 8; 
+const int HBridge1 = 9;
+const int HBridge2 = 10;
 
 //Analog pin, used for reading the pot voltage
-int SpeedControl1 = A0;
+const int SpeedControl1 = A0;
 
 volatile long encoder0Pos=0;
 long newposition;
 long oldposition = 0;
 unsigned long newtime;
 unsigned long oldtime = 0;
-float vel;
-// Variable for RPM measuerment
+
+// Variable for RPM/VEL measuerment
 float rpm = 0;
+float vel = 0;
 
 //PID errors and times
 float ErrorRPM;
@@ -67,7 +68,7 @@ void loop(){
   //Read voltage from the pot as an input, range 0-5V, mapped to 0-1023 by ADC
   int PotInput = analogRead(SpeedControl1);//range 0 1023
   //Translate volte input to RPM, it translates a signal form user to RPM unit
-  float IdealRPM_float = voltageToRPM(PotInput);
+  float IdealRPM = voltageToRPM(PotInput);
   //Computes ABSOLUTE value of RPM
   float ActualRPM = velocityComputation();
 
@@ -100,13 +101,11 @@ void loop(){
   String IdealDirection = "-";
   if (IdealRPM > 0){ IdealDirection = "+"; }
 
-
   float ErrorRPM = abs(IdealRPM_float - ActualRPM);
 
   //Log Data
-  Serial.print ("T(Ideal|Actual) |");
-  Serial.print ("Direction("+IdealDirection+"|"+ActualDirection+") | ");
-  Serial.println ("RPM("+String(IdealRPM_float)+"|"+String(ActualRPM)+"|e:"+String(ErrorRPM)+") | ");
+  Serial.print ("IdealDirection,"+IdealDirection+",ActualDirection,"+ActualDirection+",");
+  Serial.println ("IdealRPM_float,"+String(IdealRPM_float)+",ActualRPM,"+String(ActualRPM)+",ErrorRPM,"String(ErrorRPM));
 
   //Update Prior States
   //Strore position used for this cycle
