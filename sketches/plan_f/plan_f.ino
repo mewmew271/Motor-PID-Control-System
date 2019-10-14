@@ -119,6 +119,8 @@ const int enA = 6; //enA=PWM
 const int in1 = 9; //DIR1
 const int in2 = 10;//DIR2
 void Engine_Controller(int duty, bool polarity) {
+  int motor_pwm = map(duty, 0, 23, 0, 255);
+  
   if (polarity) {
     digitalWrite(in1, LOW);
     digitalWrite(in2, HIGH);
@@ -126,10 +128,10 @@ void Engine_Controller(int duty, bool polarity) {
   else {
     digitalWrite(in1, HIGH);
     digitalWrite(in2, LOW);
+    motor_pwm = -motor_pwm;
   }
   
   // Set speed to X out of possible range [~127-255]
-  int motor_pwm = map(duty, 0, 23, 0, 255);
   analogWrite(enA, motor_pwm);
 }
 
