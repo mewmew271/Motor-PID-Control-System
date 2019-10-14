@@ -165,9 +165,8 @@ void loop(){
   float ErrorRPM = abs(IdealRPM_float - ActualRPM);
 
   //Log Data
-  Serial.print ("T(Ideal|Actual) |");
-  Serial.print ("Direction("+IdealDirection+"|"+ActualDirection+") | ");
-  Serial.println ("RPM("+String(IdealRPM_float)+"|"+String(ActualRPM)+"|e:"+String(ErrorRPM)+") | ");
+  Serial.print ("IdealDirection,"+IdealDirection+",ActualDirection,"+ActualDirection+",");
+  Serial.println ("IdealRPM_float,"+String(IdealRPM_float)+",ActualRPM,"+String(ActualRPM)+",ErrorRPM,"String(ErrorRPM));
 
   //Update Prior States
   oldposition = newposition;
