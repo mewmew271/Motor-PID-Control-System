@@ -71,7 +71,7 @@ void Position_Counter() {
 
 // Calculate speed
 float Speed_Calculation() {
-  float velocity = (float)((newposition - oldposition) * 1000) / (newtime - oldtime);
+  float velocity = ((newposition - oldposition) * 1000) / (newtime - oldtime);
   Serial.print ("VALOCITY:" + String(velocity) + " | ");
   return (float)velocity * 60 / ENC_COUNT_REV;
 }
@@ -168,7 +168,7 @@ void loop() {
   float actual_rpm = Speed_Calculation();
 
 
-  //Branch AB
+  //BRANCH: Merged
   float error_rpm = Error_Node(ideal_rpm, actual_rpm);
   float duty = PID_Controller(error_rpm); //global: [pk, ik, dk]
   bool polarity = Direction_Controller(duty);
@@ -179,7 +179,9 @@ void loop() {
   Serial.print ("POT(" + String(analogRead(Potentiometer_in)) + ") | ");
   Serial.print ("Clockwise(" + String(polarity) + ") | ");
   Serial.print ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
-  Serial.println ("POS(n:" + String(newposition) + "|o:" + String(oldposition) + ") | ");
+  Serial.print ("DUTY(" + String(duty) + ") | ");
+  Serial.print ("POS(" + String(newposition-oldposition) + ") | ");
+  Serial.println ("TIM(" + String(newtime-oldtime) + ") | ");
 
 
   //Position_Counter();
