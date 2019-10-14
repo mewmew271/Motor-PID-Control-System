@@ -1,5 +1,11 @@
 # motor_pid_control
 Foundations of Robotics project
+
+# Exam Question
+> Describe the theory and practice of motors and motor control, including electromagnetic theory, PID control, and embedded systems used in a real application.
+
+
+
 ### Motor cables
 ![cables](https://github.com/parisChatz/motor_pid_control/blob/master/cables.png "cables")
 ### Schematic for circuit
