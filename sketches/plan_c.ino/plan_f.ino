@@ -1,3 +1,8 @@
+//sudo chmod a+rw /dev/ttyACM0
+//368.763:1 gear ratio
+
+#define ENC_COUNT_REV 4425.156
+
 /*
 void loop2() {
 
@@ -20,6 +25,18 @@ void loop2() {
 
 
 
+void setup(){
+  
+  pinMode(encoder0PinA, INPUT_PULLUP);
+  pinMode(encoder0PinB, INPUT_PULLUP);
+  
+  attachInterrupt(0, doEncoder, RISING); 
+  pinMode(enA, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  Serial.begin (9600);
+  Serial.println("start");
+}
 void loop() {
 
   //Branch A
@@ -39,6 +56,22 @@ void loop() {
 }
 
 
+// Encoder output to Arduino Interrupt pin 2 and 3
+const int encoder0PinA = 2;
+const int encoder0PinB = 3;
+volatile long encoder0Pos=0;
+void doEncoder()
+{
+  if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
+    encoder0Pos++;
+  } else {
+    encoder0Pos--;
+  }
+}
+
+
+
+
 //BRANCH: Input
 
 //Map Potentiometer to Usable Scale
@@ -47,6 +80,7 @@ float RPM_Mapping(int potInput)
 {
  return (float) abs(map(potInput, 0, POTENTIOMETER_SCALE, -2300, 2300)/100);
 }
+
 
 
 
@@ -69,7 +103,8 @@ void Position_Counter() {
 
 // Calculate speed
 float Speed_Calculation() {
-  return (float)(abs(newposition-oldposition) * 1000)/(newtime-oldtime);
+  float velocity = (float)(abs(newposition-oldposition) * 1000)/(newtime-oldtime);
+  return = (float) abs(velocity * 60 / ENC_COUNT_REV));
 }
 
 
@@ -77,7 +112,7 @@ float Speed_Calculation() {
 
 
 
-  //Branch AB
+//BRANCH: Merged
 
 //Calculate the rpm error
 float Error_Node(float ideal_rpm, float actual_rpm) {
@@ -85,7 +120,7 @@ float Error_Node(float ideal_rpm, float actual_rpm) {
 }
 
 
-//
+//Calculate PID Error
 int pk = 1;
 int ik = 1;
 int dk = 1;
@@ -95,14 +130,13 @@ float PID_Controller(float error) {
   //cumulative_error += ErrorRPM * elapsedTime;
   //rateError = (ErrorRPM - last_ErrorRPM)/elapsedTime;
   
-  return kp * ErrorRPM;// + ki * cumulative_error + kd * rateError;
-  
+  return pk * ErrorRPM;// + ik * cumulative_error + dk * rateError;
 }
 
 //Determine direction
 bool Direction_Controller() {
   // Calculate Direction
-  if (newPosition > oldPosition){
+  if (newPosition > oldPosition) {
     return false;
   }
   return true;
