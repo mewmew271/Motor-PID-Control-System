@@ -25,35 +25,6 @@ void loop2() {
 
 
 
-void setup(){
-  
-  pinMode(encoder0PinA, INPUT_PULLUP);
-  pinMode(encoder0PinB, INPUT_PULLUP);
-  
-  attachInterrupt(0, doEncoder, RISING); 
-  pinMode(enA, OUTPUT);
-  pinMode(in1, OUTPUT);
-  pinMode(in2, OUTPUT);
-  Serial.begin (9600);
-  Serial.println("start");
-}
-void loop() {
-
-  //Branch A
-  ideal_rpm = RPM_Mapping(analogRead(Potentiometer_in))
-
-  //Branch B
-  Position_Counter(previous_position)
-  actual_rpm = Speed_Calculation()
-  
-
-  //Branch AB
-  error_rpm = Error_Node(ideal_rpm, actual_rpm)
-  duty = PID_Controller() //global: [pk, ik, dk]
-  polarity = Direction_Controller()
-  Engine_Controller(duty, polarity)
-  
-}
 
 
 // Encoder output to Arduino Interrupt pin 2 and 3
@@ -104,7 +75,7 @@ void Position_Counter() {
 // Calculate speed
 float Speed_Calculation() {
   float velocity = (float)(abs(newposition-oldposition) * 1000)/(newtime-oldtime);
-  return = (float) abs(velocity * 60 / ENC_COUNT_REV));
+  return (float)abs(velocity * 60 / ENC_COUNT_REV);
 }
 
 
@@ -116,7 +87,7 @@ float Speed_Calculation() {
 
 //Calculate the rpm error
 float Error_Node(float ideal_rpm, float actual_rpm) {
-  return (ideal_rpm-actual_rpm)
+  return (ideal_rpm-actual_rpm);
 }
 
 
@@ -130,13 +101,13 @@ float PID_Controller(float error) {
   //cumulative_error += ErrorRPM * elapsedTime;
   //rateError = (ErrorRPM - last_ErrorRPM)/elapsedTime;
   
-  return pk * ErrorRPM;// + ik * cumulative_error + dk * rateError;
+  return pk * error;// + ik * cumulative_error + dk * rateError;
 }
 
 //Determine direction
 bool Direction_Controller() {
   // Calculate Direction
-  if (newPosition > oldPosition) {
+  if (newposition > oldposition) {
     return false;
   }
   return true;
@@ -160,4 +131,48 @@ void Engine_Controller(int duty, bool polarity) {
   // Set speed to X out of possible range [~127-255]
   int motor_pwm = map(duty, 0, 23, 0, 255);
   analogWrite(enA, motor_pwm);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const int Potentiometer_in = A0;
+void setup(){
+  
+  pinMode(encoder0PinA, INPUT_PULLUP);
+  pinMode(encoder0PinB, INPUT_PULLUP);
+  
+  attachInterrupt(0, doEncoder, RISING); 
+  pinMode(enA, OUTPUT);
+  pinMode(in1, OUTPUT);
+  pinMode(in2, OUTPUT);
+  Serial.begin (9600);
+  Serial.println("start");
+}
+void loop() {
+
+  //Branch A
+  float ideal_rpm = RPM_Mapping(analogRead(Potentiometer_in));
+
+  //Branch B
+  Position_Counter();
+  float actual_rpm = Speed_Calculation();
+  
+
+  //Branch AB
+  float error_rpm = Error_Node(ideal_rpm, actual_rpm);
+  float duty = PID_Controller(error_rpm); //global: [pk, ik, dk]
+  bool polarity = Direction_Controller();
+  Engine_Controller(duty, polarity);
+  
 }
