@@ -119,7 +119,6 @@ const int enA = 6; //enA=PWM
 const int in1 = 9; //DIR1
 const int in2 = 10;//DIR2
 void Engine_Controller(int duty, bool polarity) {
-  int motor_pwm = map(duty, 0, 23, 0, 255);
   
   if (polarity) {
     digitalWrite(in1, LOW);
@@ -128,10 +127,10 @@ void Engine_Controller(int duty, bool polarity) {
   else {
     digitalWrite(in1, HIGH);
     digitalWrite(in2, LOW);
-    motor_pwm = -motor_pwm;
   }
   
   // Set speed to X out of possible range [~127-255]
+  int motor_pwm = map(duty, 0, 23, 0, 255);
   analogWrite(enA, motor_pwm);
 }
 
@@ -176,5 +175,11 @@ void loop() {
   float duty = PID_Controller(error_rpm); //global: [pk, ik, dk]
   bool polarity = Direction_Controller();
   Engine_Controller(duty, polarity);
+
+  
+  //Log Data
+  Serial.print ("Clockwise(" + String(polarity) + ") | ");
+  Serial.println ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
+
   
 }
