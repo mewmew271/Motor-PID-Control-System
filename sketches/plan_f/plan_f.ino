@@ -47,12 +47,12 @@ void doEncoder()
 //Map Potentiometer to Usable Scale (Increase by turning AntiClockwise)
 const int directionSwitch = 13; 
 int POTENTIOMETER_SCALE = 1023;
-float RPM_Mapping(int potInput)
+float RPM_Mapping1(int potInput)
 { 
-  return (float) map(potInput, 0, POTENTIOMETER_SCALE, 0,2300) / 100;
+  return (float) map(potInput, 0, POTENTIOMETER_SCALE, 2300, -2300) / 100;
 }
 
-float RPM_Mapping1(int potInput)
+float RPM_Mapping(int potInput)
 {
   Serial.print ("DIRECTIONTHINGGY(" + String(analogRead(directionSwitch)) + ") | ");
   float ideal_rpm = (float) map(potInput, 0, POTENTIOMETER_SCALE, 0,2300) / 100;
@@ -82,9 +82,20 @@ void Position_Counter() {
 
 // Calculate speed
 float Speed_Calculation() {
-  float velocity = (abs(newposition - oldposition) * 1000) / (newtime - oldtime);
+  newposition = encoder0Pos;
+  newtime = millis();
+  float velocity = ((newposition - oldposition) * 1000) / (newtime - oldtime);
   Serial.print ("VEL(" + String(velocity) + ") | ");
-  return (float)velocity * 60 / ENC_COUNT_REV;
+
+  float actual_rpm = (float)velocity * 60 / ENC_COUNT_REV;
+  Serial.print ("ACT(" + String(actual_rpm) + ") | ");
+  
+  Serial.print ("POS(" + String(newposition-oldposition) + ") | ");
+  Serial.print ("TIM(" + String(newtime-oldtime) + ") | ");
+  oldposition = newposition;
+  oldtime = newtime;
+  
+  return actual_rpm;
 }
 
 
@@ -160,7 +171,7 @@ void setup(){
   
   pinMode(encoder0PinA, INPUT_PULLUP);
   pinMode(encoder0PinB, INPUT_PULLUP);
-  
+  pinMode(directionSwitch, INPUT);
   attachInterrupt(0, doEncoder, RISING); 
   pinMode(enA, OUTPUT);
   pinMode(in1, OUTPUT);
@@ -169,19 +180,14 @@ void setup(){
   Serial.println("start");
 }
 void loop() {
-  newposition = encoder0Pos;
-  newtime = millis();
   
   //BRANCH: Input
   float ideal_rpm = RPM_Mapping(analogRead(Potentiometer_in));
   Serial.print ("POT(" + String(analogRead(Potentiometer_in)) + ") | ");
+  Serial.print ("IRPM(" + String(ideal_rpm) + ") || ");
   
   //BRANCH: Feedback
   float actual_rpm = Speed_Calculation();
-  Serial.print ("ACT(" + String(actual_rpm) + ") | ");
-  Serial.print ("POS(" + String(newposition-oldposition) + ") | ");
-  Serial.print ("TIM(" + String(newtime-oldtime) + ") | ");
-
   //BRANCH: Merged
   float error_rpm = Error_Node(ideal_rpm, actual_rpm);
   float duty = PID_Controller(error_rpm); //global: [pk, ik, dk]
@@ -189,16 +195,11 @@ void loop() {
   //Serial.print ("Clockwise(" + String(polarity) + ") | ");
   Engine_Controller(duty, polarity);
 
-
-  //Log Data
-  
   
   //Serial.print ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
   //Serial.print ("DUTY(" + String(duty) + ") | ");
   Serial.println();
 
-  //Position_Counter();
-  oldposition = newposition;
-  oldtime = newtime;
+
   delay(250);
 }
