@@ -54,9 +54,9 @@ float RPM_Mapping1(int potInput)
 
 float RPM_Mapping(int potInput)
 {
-  Serial.print ("DIRECTIONTHINGGY(" + String(analogRead(directionSwitch)) + ") | ");
+  Serial.print ("DIRECTIONTHINGGY(" + String(digitalRead(directionSwitch)) + ") | ");
   float ideal_rpm = (float) map(potInput, 0, POTENTIOMETER_SCALE, 0,2300) / 100;
-  if (analogRead(directionSwitch) == HIGH) {
+  if (digitalRead(directionSwitch)) {
     ideal_rpm  = -ideal_rpm;
   }
   return ideal_rpm;
@@ -123,6 +123,7 @@ float PID_Controller(float error) {
 
   return pk * error;// + ik * cumulative_error + dk * rateError;
 }
+
 
 //Determine direction
 bool Direction_Controller(float duty) {
