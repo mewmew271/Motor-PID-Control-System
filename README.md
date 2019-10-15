@@ -14,4 +14,6 @@ Foundations of Robotics project
 ![system_structure](https://github.com/parisChatz/motor_pid_control/blob/master/system_structure.png "system_structure")
 ### RPMvsTorque 
 ![rpm_vs_torque](https://github.com/parisChatz/motor_pid_control/blob/master/rpm_vs_torque.PNG "rpm_vs_torque")
+### Motor specs
+![specs](https://github.com/parisChatz/motor_pid_control/blob/master/motor_specs.png "specs")
 
