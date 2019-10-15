@@ -44,11 +44,22 @@ void doEncoder()
 
 //BRANCH: Input
 
-//Map Potentiometer to Usable Scale
+//Map Potentiometer to Usable Scale (Increase by turning AntiClockwise)
+const int directionSwitch = 13; 
 int POTENTIOMETER_SCALE = 1023;
 float RPM_Mapping(int potInput)
+{ 
+  return (float) map(potInput, 0, POTENTIOMETER_SCALE, 0,2300) / 100;
+}
+
+float RPM_Mapping1(int potInput)
 {
-  return (float) map(potInput, 0, POTENTIOMETER_SCALE, -2300,2300) / 100;
+  Serial.print ("DIRECTIONTHINGGY(" + String(analogRead(directionSwitch)) + ") | ");
+  float ideal_rpm = (float) map(potInput, 0, POTENTIOMETER_SCALE, 0,2300) / 100;
+  if (analogRead(directionSwitch) == HIGH) {
+    ideal_rpm  = -ideal_rpm;
+  }
+  return ideal_rpm;
 }
 
 
@@ -71,8 +82,8 @@ void Position_Counter() {
 
 // Calculate speed
 float Speed_Calculation() {
-  float velocity = ((newposition - oldposition) * 1000) / (newtime - oldtime);
-  Serial.print ("VALOCITY:" + String(velocity) + " | ");
+  float velocity = (abs(newposition - oldposition) * 1000) / (newtime - oldtime);
+  Serial.print ("VEL(" + String(velocity) + ") | ");
   return (float)velocity * 60 / ENC_COUNT_REV;
 }
 
@@ -163,26 +174,28 @@ void loop() {
   
   //BRANCH: Input
   float ideal_rpm = RPM_Mapping(analogRead(Potentiometer_in));
-
+  Serial.print ("POT(" + String(analogRead(Potentiometer_in)) + ") | ");
+  
   //BRANCH: Feedback
   float actual_rpm = Speed_Calculation();
-
+  Serial.print ("ACT(" + String(actual_rpm) + ") | ");
+  Serial.print ("POS(" + String(newposition-oldposition) + ") | ");
+  Serial.print ("TIM(" + String(newtime-oldtime) + ") | ");
 
   //BRANCH: Merged
   float error_rpm = Error_Node(ideal_rpm, actual_rpm);
   float duty = PID_Controller(error_rpm); //global: [pk, ik, dk]
   bool polarity = Direction_Controller(duty);
+  //Serial.print ("Clockwise(" + String(polarity) + ") | ");
   Engine_Controller(duty, polarity);
 
 
   //Log Data
-  Serial.print ("POT(" + String(analogRead(Potentiometer_in)) + ") | ");
-  Serial.print ("Clockwise(" + String(polarity) + ") | ");
-  Serial.print ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
-  Serial.print ("DUTY(" + String(duty) + ") | ");
-  Serial.print ("POS(" + String(newposition-oldposition) + ") | ");
-  Serial.println ("TIM(" + String(newtime-oldtime) + ") | ");
-
+  
+  
+  //Serial.print ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
+  //Serial.print ("DUTY(" + String(duty) + ") | ");
+  Serial.println();
 
   //Position_Counter();
   oldposition = newposition;
