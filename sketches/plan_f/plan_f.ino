@@ -1,9 +1,9 @@
 /*
 TODO: 
-	PID Function
-A	Timer Speed Callback
+	PID Function - https://www.youtube.com/watch?v=CgJROEmC914
+A	Timer Speed Callback - https://playground.arduino.cc/Code/Timer/
 J	Combine Inputs
-	Setup Gazebo Simulation
+	Setup Gazebo Simulation - http://gazebosim.org/tutorials?cat=build_robot
 	Layout Points for Essay
 */
 
