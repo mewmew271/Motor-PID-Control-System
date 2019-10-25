@@ -224,7 +224,7 @@ void setup(){
 	pinMode(encoder0PinA, INPUT_PULLUP);
 	pinMode(encoder0PinB, INPUT_PULLUP);
 	pinMode(directionSwitch, INPUT);
-	attachInterrupt(0, doEncoder, RISING); 
+	attachInterrupt(0, doEncoder, RISING); //check if this is doing anything as nothing is attached to pin interrupt pin 0
 	pinMode(enA, OUTPUT);
 	pinMode(in1, OUTPUT);
 	pinMode(in2, OUTPUT);
