@@ -37,26 +37,46 @@ J	Combine Inputs
 //PINS
 const int encoder0PinA = 2;
 const int encoder0PinB = 3;
+const int enA = 6;  //PWM
+const int in1 = 9;  //DIR1
+const int in2 = 10; //DIR2
+
+//HARDWARE ONLY
+const bool HARDWARE_INPUT = false;
 const int directionSwitch = 13; 
-const int enA = 6; //enA=PWM
-const int in1 = 9; //DIR1
-const int in2 = 10;//DIR2
+const int Potentiometer_in = A0;
+const int POTENTIOMETER_SCALE = 1023;
 
 //Global Variables
 volatile long encoder0Pos = 0;
-const int POTENTIOMETER_SCALE = 1023;
-
 
 
 //BRANCH: Input
-//TODO: Combine into function:<INPUT()>
+void INPUT(bool* polarity, float* ideal_rpm) {
+	
+	//If using hardware for inputs...
+	if (HARDWARE_INPUT) {
+		Serial.print ("POT(" + String(analogRead(Potentiometer_in)) + ") | ");
+		*polarity = Direction_Controller();
+		*ideal_rpm = RPM_Mapping(polarity);
+	}
+	else {
+		*ideal_rpm = READ_INPUT() {
+		*polarity = CALC_POLARITY(ideal_rpm)
+	}
+	
+	Serial.print ("DIR(" + String(polarity) + ") | ");
+	Serial.print ("IRPM(" + String(ideal_rpm) + ") || ");
+	
+	return;
+}
 
-//Define direction
+
+
+//Define direction & Map Potentiometer to Usable Scale (Increase by turning AntiClockwise)
 bool Direction_Controller() {
 	return digitalRead(directionSwitch);
 }
-
-//Map Potentiometer to Usable Scale (Increase by turning AntiClockwise)
 float RPM_Mapping(bool polarity)
 {
 	float ideal_rpm = (float) map(analogRead(Potentiometer_in), 0, POTENTIOMETER_SCALE, 0,2300) / 100;
@@ -65,6 +85,7 @@ float RPM_Mapping(bool polarity)
 	}
 	return ideal_rpm;
 }
+
 
 //Give us a serial input
 int READ_INPUT() {
@@ -108,6 +129,8 @@ void doEncoder()
 	} else {
 		encoder0Pos--;
 	}
+	
+	return
 }
 
 
@@ -196,14 +219,6 @@ void Engine_Controller(int duty, bool polarity) {
 
 
 
-
-
-
-
-
-
-
-const int Potentiometer_in = A0;
 void setup(){
 	
 	pinMode(encoder0PinA, INPUT_PULLUP);
@@ -218,16 +233,13 @@ void setup(){
 }
 void loop() {
 	
-	//BRANCH: Input
-	bool polarity = Direction_Controller();
-	//Serial.print ("DIR(" + String(polarity) + ") | ");
-
-	float ideal_rpm = RPM_Mapping(polarity);
-	//Serial.print ("POT(" + String(analogRead(Potentiometer_in)) + ") | ");
-	//Serial.print ("IRPM(" + String(ideal_rpm) + ") || ");
-
-
 	
+	//BRANCH: Input
+	double polatiry;
+	double ideal_rpm;
+	INPUT(&polarity, &ideal_rpm);
+   
+   
 	//BRANCH: Feedback
 	float actual_rpm = Speed_Calculation();
 
