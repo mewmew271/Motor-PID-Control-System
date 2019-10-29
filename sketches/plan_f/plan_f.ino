@@ -1,37 +1,20 @@
-#include <timer.h>
 /*
 TODO: 
-	PID Function - https://www.youtube.com/watch?v=CgJROEmC914
-A	Timer Speed Callback - https://playground.arduino.cc/Code/Timer/
-J	Combine Inputs
-	Setup Gazebo Simulation - http://gazebosim.org/tutorials?cat=build_robot
-	Layout Points for Essay
+  PID Function - https://www.youtube.com/watch?v=CgJROEmC914
+A Timer Speed Callback - https://playground.arduino.cc/Code/Timer/
+J Combine Inputs
+  Setup Gazebo Simulation - http://gazebosim.org/tutorials?cat=build_robot
+  Layout Points for Essay
+
+  sudo chmod a+rw /dev/ttyACM0
+  368.763:1 gear ratio
 */
 
-//sudo chmod a+rw /dev/ttyACM0
-//368.763:1 gear ratio
 
+#include <timer.h>
 #define ENC_COUNT_REV 4425.156
 
-/*
-	void loop2() {
 
-	//Branch A
-	ideal_rpm = RPM_Mapping(Pot_Value)
-
-	//Branch B
-	Position_Counter(previous_position)
-	actual_rpm = Speed_Calculation()
-
-
-	//Branch AB
-	error_rpm = Error_Node(ideal_rpm, actual_rpm)
-	duty = PID_ Controller() //global: [pk, ik, dk]
-	polarity = Direction_Controller()
-	Engine_Controller(duty, polarity)
-
-	}
-*/
 //timer 
 auto timer = timer_create_default(); // create a timer with default settings
 
@@ -53,7 +36,7 @@ volatile long encoder0Pos = 0;
 
 
 //BRANCH: Input
-void input() {
+int input() {
 
 	String inString = "";
 	while (Serial.available() > 0) { //While serial connection exists
@@ -94,6 +77,8 @@ bool RPM(void *){
  
 }
 
+
+//https://github.com/contrem/arduino-timer
 void hall(){
   button_time = micros();//millis() //millisecconds 
   //check to see if increment() was called in the last 30 microseconds 3/1000000 seconds 
@@ -106,20 +91,13 @@ void hall(){
 }
 
 
+
+
 //BRANCH: Feedback
 
 // Encoder output to Arduino Interrupt pin 2 and 3
 // A - - A A - - A
 // B B - - B B - -
-//void doEncoder() {
-//  if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
-//    encoder0Pos++;
-//  } else {
-//    encoder0Pos--;
-//  }
-//
-//  return
-//}
 
 // Update motor position
 int newposition = 0;
@@ -208,25 +186,24 @@ void Engine_Controller(int duty) {
 
 void setup(){
 	attachInterrupt(digitalPinToInterrupt(encoder0PinA), hall, FALLING);
-    timer.every(100, RPM);//100 mills 
-
-	//pinMode(encoder0PinA, INPUT_PULLUP);
-	//pinMode(encoder0PinB, INPUT_PULLUP);
-	pinMode(directionSwitch, INPUT);
-	//attachInterrupt(0, doEncoder, RISING); //check if this is doing anything as nothing is attached to pin interrupt pin 0
+  timer.every(100, RPM);//100 mills 
 	pinMode(enA, OUTPUT);
 	pinMode(in1, OUTPUT);
 	pinMode(in2, OUTPUT);
 	Serial.begin (9600);
 	Serial.println("start");
+  
+  //attachInterrupt(0, doEncoder, RISING); //check if this is doing anything as nothing is attached to pin interrupt pin 0
+  //pinMode(directionSwitch, INPUT);
+  //pinMode(encoder0PinA, INPUT_PULLUP);
+  //pinMode(encoder0PinB, INPUT_PULLUP);
 }
 void loop() {
-	
-	 timer.tick();
+	timer.tick();
      //---------------------------
 	//BRANCH: Input
 	int ideal_rpm = input(); //TODO: convert to float
-   
+  
    
 	//BRANCH: Feedback
 	float actual_rpm = Speed_Calculation();
@@ -240,15 +217,8 @@ void loop() {
 	Engine_Controller(duty);
 
 	
-	//Serial.print ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
-	//Serial.print ("DUTY(" + String(duty) + ") | ");
-	//Serial.println();
-
-
-	delay(250); 
-	//TODO: Find out if this is reeeeallly neeeded? It shouldn't be
-	/*
-	Speed_Calculation needs to be changed to a time-based callback
-	USE THIS<<<< https://playground.arduino.cc/Code/Timer/ >>>>
-	*/
+	Serial.print ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
+	Serial.print ("DUTY(" + String(duty) + ") | ");
+	Serial.println();
+	
 }
