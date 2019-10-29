@@ -1,3 +1,4 @@
+#include <timer.h>
 /*
 TODO: 
 	PID Function - https://www.youtube.com/watch?v=CgJROEmC914
@@ -31,8 +32,8 @@ J	Combine Inputs
 
 	}
 */
-
-
+//timer 
+auto timer = timer_create_default(); // create a timer with default settings
 
 //PINS
 const int encoder0PinA = 2;
@@ -52,43 +53,8 @@ volatile long encoder0Pos = 0;
 
 
 //BRANCH: Input
-void INPUT(bool* polarity, float* ideal_rpm) {
-	
-	//If using hardware for inputs...
-	if (HARDWARE_INPUT) {
-		Serial.print ("POT(" + String(analogRead(Potentiometer_in)) + ") | ");
-		*polarity = Direction_Controller();
-		*ideal_rpm = RPM_Mapping(polarity);
-	}
-	else {
-		*ideal_rpm = READ_INPUT() {
-		*polarity = CALC_POLARITY(ideal_rpm)
-	}
-	
-	Serial.print ("DIR(" + String(polarity) + ") | ");
-	Serial.print ("IRPM(" + String(ideal_rpm) + ") || ");
-	
-	return;
-}
+void input() {
 
-
-
-//Define direction & Map Potentiometer to Usable Scale (Increase by turning AntiClockwise)
-bool Direction_Controller() {
-	return digitalRead(directionSwitch);
-}
-float RPM_Mapping(bool polarity)
-{
-	float ideal_rpm = (float) map(analogRead(Potentiometer_in), 0, POTENTIOMETER_SCALE, 0,2300) / 100;
-	if (polarity) { //True = Clockwise
-		ideal_rpm	= -ideal_rpm;
-	}
-	return ideal_rpm;
-}
-
-
-//Give us a serial input
-int READ_INPUT() {
 	String inString = "";
 	while (Serial.available() > 0) { //While serial connection exists
 		
@@ -104,17 +70,40 @@ int READ_INPUT() {
 		}
 		else 
 		{ //Convert to int and return
-			return inString.toInt() 
+			return inString.toInt(); //TODO: Convert toFloat()
 		}
 	}
 }
-bool CALC_POLARITY(in) {
-	return in<0
+
+
+//rpm calculations----------------------------------
+volatile int rpm = 0;
+//variables to keep track of the timing of recent interrupts
+unsigned long button_time = 0;
+unsigned long last_button_time = 0;
+
+bool RPM(void *){
+ Serial.print("rpm: ");
+ Serial.print(rpm);
+ 
+ Serial.print("  rpm a min: ");
+ Serial.print((rpm*10)*60);
+ Serial.println();
+ rpm = 0; 
+ return true; // keep timer active? true
+ 
 }
 
-
-
-
+void hall(){
+  button_time = micros();//millis() //millisecconds 
+  //check to see if increment() was called in the last 30 microseconds 3/1000000 seconds 
+  if (button_time - last_button_time > 100)//may need to change //10,000 rpm max 
+  {
+    rpm++;
+    Serial.println(rpm);
+    last_button_time = button_time;
+  }
+}
 
 
 //BRANCH: Feedback
@@ -122,17 +111,15 @@ bool CALC_POLARITY(in) {
 // Encoder output to Arduino Interrupt pin 2 and 3
 // A - - A A - - A
 // B B - - B B - -
-void doEncoder()
-{
-	if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
-		encoder0Pos++;
-	} else {
-		encoder0Pos--;
-	}
-	
-	return
-}
-
+//void doEncoder() {
+//  if (digitalRead(encoder0PinA) == digitalRead(encoder0PinB)) {
+//    encoder0Pos++;
+//  } else {
+//    encoder0Pos--;
+//  }
+//
+//  return
+//}
 
 // Update motor position
 int newposition = 0;
@@ -197,9 +184,9 @@ float PID_Controller(float ideal, float error) {
 
 
 //Enable motor
-void Engine_Controller(int duty, bool polarity) {
+void Engine_Controller(int duty) {
 	
-	if (polarity) { //True if CLOCKWISE
+	if (duty < 0) { //True if CLOCKWISE
 		digitalWrite(in1, LOW);
 		digitalWrite(in2, HIGH);
 	}
@@ -220,11 +207,13 @@ void Engine_Controller(int duty, bool polarity) {
 
 
 void setup(){
-	
-	pinMode(encoder0PinA, INPUT_PULLUP);
-	pinMode(encoder0PinB, INPUT_PULLUP);
+	attachInterrupt(digitalPinToInterrupt(encoder0PinA), hall, FALLING);
+    timer.every(100, RPM);//100 mills 
+
+	//pinMode(encoder0PinA, INPUT_PULLUP);
+	//pinMode(encoder0PinB, INPUT_PULLUP);
 	pinMode(directionSwitch, INPUT);
-	attachInterrupt(0, doEncoder, RISING); //check if this is doing anything as nothing is attached to pin interrupt pin 0
+	//attachInterrupt(0, doEncoder, RISING); //check if this is doing anything as nothing is attached to pin interrupt pin 0
 	pinMode(enA, OUTPUT);
 	pinMode(in1, OUTPUT);
 	pinMode(in2, OUTPUT);
@@ -233,11 +222,10 @@ void setup(){
 }
 void loop() {
 	
-	
+	 timer.tick();
+     //---------------------------
 	//BRANCH: Input
-	double polatiry;
-	double ideal_rpm;
-	INPUT(&polarity, &ideal_rpm);
+	int ideal_rpm = input(); //TODO: convert to float
    
    
 	//BRANCH: Feedback
@@ -249,7 +237,7 @@ void loop() {
 	float duty = PID_Controller(ideal_rpm, error_rpm); //global: [pk, ik, dk]
 	
 	
-	Engine_Controller(duty, polarity);
+	Engine_Controller(duty);
 
 	
 	//Serial.print ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
