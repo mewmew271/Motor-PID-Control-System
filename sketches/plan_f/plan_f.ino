@@ -60,9 +60,9 @@ int input() {
 
 //rpm calculations----------------------------------
 volatile long count_per_ms = 0; //Encoder triggers/ms
-float triggers_pm = 1;
-float encoder_rpm = 1;
-float actual_rpm = 1;
+float triggers_pm = 0;
+float encoder_rpm = 0;
+float actual_rpm = 0;
 
 //Track timings of recent Interrupts
 unsigned long button_time = 0;
