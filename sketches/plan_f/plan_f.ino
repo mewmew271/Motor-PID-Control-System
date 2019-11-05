@@ -28,6 +28,11 @@ const int in2 = 10; //DIR2
 //Global Variables
 volatile long encoder0Pos = 0;
 
+//Timer Values
+const unsigned int TIMER_RATE = 100;
+
+
+
 //BRANCH: Input
 int input() {
 
@@ -52,14 +57,14 @@ int input() {
 		else 
 		{
       //Convert to float, handle edge cases, return value.
-      float xxx = inString.toFloat();
-      if (xxx > 23) {
-        xxx = 23;
+      float output = inString.toFloat();
+      if (output > 23) {
+        output = 23;
       }
-      else if (xxx < -23) {
-        xxx = -23;
+      else if (output < -23) {
+        output = -23;
 		  }
-			return xxx;
+			return output;
 		}
 	} 
 }
@@ -80,7 +85,7 @@ bool actual_polarity = 0;
 
 bool Calculate_Actual_RPM(void *){
 
-  triggers_pm = (A_count_per_ms*10)*60;
+  triggers_pm = (A_count_per_ms*(1000/TIMER_RATE))*60;
   encoder_rpm = (triggers_pm/48);
   actual_rpm =  encoder_rpm / ENC_COUNT_REV;
 
@@ -208,12 +213,9 @@ void Engine_Controller(int duty) {
 
 
 
-
-
-
 void setup(){
   attachInterrupt(digitalPinToInterrupt(encoder0PinA), A_Channel_Incrementor, FALLING);
-  timer.every(100, Calculate_Actual_RPM);//100 mills 
+  timer.every(TIMER_RATE, Calculate_Actual_RPM);//100 mills 
 	pinMode(enA, OUTPUT);
 	pinMode(in1, OUTPUT);
 	pinMode(in2, OUTPUT);
