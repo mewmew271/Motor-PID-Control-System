@@ -33,7 +33,8 @@ const int POTENTIOMETER_SCALE = 1023;
 
 //Global Variables
 volatile long encoder0Pos = 0;
-
+float actual_rpm = 1;
+float encoder_rpm = 0;
 
 //BRANCH: Input
 int input() {
@@ -60,32 +61,34 @@ int input() {
 
 
 //rpm calculations----------------------------------
-volatile int rpm = 0;
+volatile long rpm_counter = 0;
 //variables to keep track of the timing of recent interrupts
 unsigned long button_time = 0;
 unsigned long last_button_time = 0;
 
-bool RPM(void *){
- Serial.print("rpm: ");
- Serial.print(rpm);
- 
- Serial.print("  rpm a min: ");
- Serial.print((rpm*10)*60);
- Serial.println();
- rpm = 0; 
- return true; // keep timer active? true
+bool Calculate_Actual_RPM(void *){
+  //Serial.print(" |  RPS (" + (rpm_counter*10) + ")");
+  //Serial.print(" |  RPM (" + (rpm_counter*10)*60 + ")");
+
+  encoder_rpm = (rpm_counter*10)*60;
+  actual_rpm = encoder_rpm/4425.156;//368.763;
+  rpm_counter = 0; 
+  
+  return true; // keep timer active? true
  
 }
 
 
 //https://github.com/contrem/arduino-timer
-void hall(){
+//Called by the interrupt
+//Increments the rpm_counter
+void rpm_incrementor(){
   button_time = micros();//millis() //millisecconds 
-  //check to see if increment() was called in the last 30 microseconds 3/1000000 seconds 
-  if (button_time - last_button_time > 100)//may need to change //10,000 rpm max 
+  //check to see if increment() was called in the last 100 microseconds 3/1000000 seconds 
+  if (button_time - last_button_time > 100)//may need to change //10,000 rpm max //TODO: Convert 100 to const thinggy
   {
-    rpm++;
-    Serial.println(rpm);
+    rpm_counter++;
+    //Serial.print(" |  RPM_Count:" + rpm_counter);
     last_button_time = button_time;
   }
 }
@@ -185,8 +188,8 @@ void Engine_Controller(int duty) {
 
 
 void setup(){
-	attachInterrupt(digitalPinToInterrupt(encoder0PinA), hall, FALLING);
-  timer.every(100, RPM);//100 mills 
+	attachInterrupt(digitalPinToInterrupt(encoder0PinA), rpm_incrementor, FALLING);
+  timer.every(100, Calculate_Actual_RPM);//100 mills 
 	pinMode(enA, OUTPUT);
 	pinMode(in1, OUTPUT);
 	pinMode(in2, OUTPUT);
@@ -198,6 +201,7 @@ void setup(){
   //pinMode(encoder0PinA, INPUT_PULLUP);
   //pinMode(encoder0PinB, INPUT_PULLUP);
 }
+
 void loop() {
 	timer.tick();
      //---------------------------
@@ -206,7 +210,7 @@ void loop() {
   
    
 	//BRANCH: Feedback
-	float actual_rpm = Speed_Calculation();
+	//float actual_rpm = Speed_Calculation(); //Moved assigbnment to the top of the script
 
 	
 	//BRANCH: Merged
@@ -216,9 +220,9 @@ void loop() {
 	
 	Engine_Controller(duty);
 
-	
-	Serial.print ("RPM(i:" + String(ideal_rpm) + "|a:" + String(actual_rpm) + "|e:" + String(error_rpm) + ") | ");
-	Serial.print ("DUTY(" + String(duty) + ") | ");
+	Serial.print ("E_RPM," + String(encoder_rpm) + ", ");
+	Serial.print ("RPM,(i:," + String(ideal_rpm) + ",|a:," + String(actual_rpm) + ",|e:," + String(error_rpm) + ",) | ,");
+	Serial.print ("DUTY(," + String(duty) + ",) | ,");
 	Serial.println();
 	
 }
