@@ -33,8 +33,6 @@ const int POTENTIOMETER_SCALE = 1023;
 
 //Global Variables
 volatile long encoder0Pos = 0;
-float actual_rpm = 1;
-float encoder_rpm = 0;
 
 //BRANCH: Input
 int input() {
@@ -61,21 +59,24 @@ int input() {
 
 
 //rpm calculations----------------------------------
-volatile long rpm_counter = 0;
-//variables to keep track of the timing of recent interrupts
+volatile long count_per_ms = 0; //Encoder triggers/ms
+float triggers_pm = 1;
+float encoder_rpm = 1;
+float actual_rpm = 1;
+
+//Track timings of recent Interrupts
 unsigned long button_time = 0;
 unsigned long last_button_time = 0;
 
-bool Calculate_Actual_RPM(void *){
-  //Serial.print(" |  RPS (" + (rpm_counter*10) + ")");
-  //Serial.print(" |  RPM (" + (rpm_counter*10)*60 + ")");
 
-  encoder_rpm = (rpm_counter*10)*60;
-  actual_rpm = encoder_rpm/4425.156;//368.763;
-  rpm_counter = 0; 
+bool Calculate_Actual_RPM(void *){
+
+  triggers_pm = (count_per_ms*10)*60;
+  encoder_rpm = (triggers_pm/48);
+  actual_rpm =  encoder_rpm / ENC_COUNT_REV;
+  count_per_ms = 0;
   
   return true; // keep timer active? true
- 
 }
 
 
@@ -84,11 +85,11 @@ bool Calculate_Actual_RPM(void *){
 //Increments the rpm_counter
 void rpm_incrementor(){
   button_time = micros();//millis() //millisecconds 
+  
   //check to see if increment() was called in the last 100 microseconds 3/1000000 seconds 
-  if (button_time - last_button_time > 100)//may need to change //10,000 rpm max //TODO: Convert 100 to const thinggy
+  if (button_time - last_button_time > 200)//may need to change //10,000 rpm max //TODO: Convert 100 to const thinggy
   {
-    rpm_counter++;
-    //Serial.print(" |  RPM_Count:" + rpm_counter);
+    count_per_ms++;
     last_button_time = button_time;
   }
 }
