@@ -19,17 +19,11 @@ J Combine Inputs
 auto timer = timer_create_default(); // create a timer with default settings
 
 //PINS
-const int encoder0PinA = 2;
-const int encoder0PinB = 3;
+const int encoder0PinA = 2; //Channel A
+const int encoder0PinB = 3; //Channel B
 const int enA = 6;  //PWM
 const int in1 = 9;  //DIR1
 const int in2 = 10; //DIR2
-
-//HARDWARE ONLY
-const bool HARDWARE_INPUT = false;
-const int directionSwitch = 13; 
-const int Potentiometer_in = A0;
-const int POTENTIOMETER_SCALE = 1023;
 
 //Global Variables
 volatile long encoder0Pos = 0;
@@ -46,52 +40,81 @@ int input() {
 		{ //If char isnum
 			inString += (char)inChar;
 		}
-		else if (inChar == 45)
-		{ //If char is '-'
-			inString += (char)inChar;
-		}
+    else if (inChar == 45)
+    { //If char is '-'
+      inString += (char)inChar;
+    }
+    else if (inChar == 46)
+    { //If char is '.'
+      inString += (char)inChar;
+      //TODO: Check what happens for input "14."
+    }
 		else 
-		{ //Convert to int and return
-			return inString.toInt(); //TODO: Convert toFloat()
+		{
+      //Convert to float, handle edge cases, return value.
+      float xxx = inString.toFloat();
+      if (xxx > 23) {
+        xxx = 23;
+      }
+      else if (xxx < -23) {
+        xxx = -23;
+		  }
+			return xxx;
 		}
-	}
+	} 
 }
 
 
 //rpm calculations----------------------------------
-volatile long count_per_ms = 0; //Encoder triggers/ms
+volatile long A_count_per_ms = 0; //Encoder triggers/ms
 float triggers_pm = 0;
 float encoder_rpm = 0;
 float actual_rpm = 0;
 
 //Track timings of recent Interrupts
-unsigned long button_time = 0;
-unsigned long last_button_time = 0;
+unsigned int update_buffer_ms = 200;
+unsigned long A_button_time = 0;
+unsigned long A_last_button_time = 0;
+bool actual_polarity = 0;
 
 
 bool Calculate_Actual_RPM(void *){
 
-  triggers_pm = (count_per_ms*10)*60;
+  triggers_pm = (A_count_per_ms*10)*60;
   encoder_rpm = (triggers_pm/48);
   actual_rpm =  encoder_rpm / ENC_COUNT_REV;
-  count_per_ms = 0;
+
+  if (actual_polarity) {
+    actual_rpm = -actual_rpm;  
+  }
+  
+  A_count_per_ms = 0;
   
   return true; // keep timer active? true
 }
 
 
 //https://github.com/contrem/arduino-timer
-//Called by the interrupt
-//Increments the rpm_counter
-void rpm_incrementor(){
-  button_time = micros();//millis() //millisecconds 
+//Called by the Interrupt
+void A_Channel_Incrementor(){
+  A_button_time = micros();//millis() //millisecconds 
   
   //check to see if increment() was called in the last 100 microseconds 3/1000000 seconds 
-  if (button_time - last_button_time > 200)//may need to change //10,000 rpm max //TODO: Convert 100 to const thinggy
+  if (A_button_time - A_last_button_time > update_buffer_ms)//may need to change //10,000 rpm max //TODO: Convert 100 to const thinggy
   {
-    count_per_ms++;
-    last_button_time = button_time;
+    A_count_per_ms++;
+    A_last_button_time = A_button_time;
   }
+
+
+  //On falling edge of channel A, use the state of B to determine direction.
+  if (digitalRead(encoder0PinB)) {
+    actual_polarity = 0; //0 defines clockwise
+  }
+  else {
+    actual_polarity = 1;
+  }
+   
 }
 
 
@@ -189,7 +212,7 @@ void Engine_Controller(int duty) {
 
 
 void setup(){
-	attachInterrupt(digitalPinToInterrupt(encoder0PinA), rpm_incrementor, FALLING);
+  attachInterrupt(digitalPinToInterrupt(encoder0PinA), A_Channel_Incrementor, FALLING);
   timer.every(100, Calculate_Actual_RPM);//100 mills 
 	pinMode(enA, OUTPUT);
 	pinMode(in1, OUTPUT);
@@ -205,13 +228,13 @@ void setup(){
 
 void loop() {
 	timer.tick();
-     //---------------------------
+
 	//BRANCH: Input
-	int ideal_rpm = input(); //TODO: convert to float
+	int ideal_rpm = input();
   
    
 	//BRANCH: Feedback
-	//float actual_rpm = Speed_Calculation(); //Moved assigbnment to the top of the script
+	//float actual_rpm = Speed_Calculation(); //Moved assignment to the top of the script
 
 	
 	//BRANCH: Merged
@@ -221,8 +244,8 @@ void loop() {
 	
 	Engine_Controller(duty);
 
-	Serial.print ("E_RPM," + String(encoder_rpm) + ", ");
-	Serial.print ("RPM,(i:," + String(ideal_rpm) + ",|a:," + String(actual_rpm) + ",|e:," + String(error_rpm) + ",) | ,");
+	Serial.print ("E_RPM," + String(encoder_rpm) + " ,");
+	Serial.print ("RPM(i:," + String(ideal_rpm) + ",|a:," + String(actual_rpm) + ",|e:," + String(error_rpm) + ",) | ,");
 	Serial.print ("DUTY(," + String(duty) + ",) | ,");
 	Serial.println();
 	
