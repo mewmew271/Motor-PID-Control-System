@@ -70,8 +70,10 @@ int input() {
 }
 
 
+//BRANCH: Feedback
 //rpm calculations----------------------------------
 volatile long A_count_per_ms = 0; //Encoder triggers/ms
+volatile long A_count_per_ms2 = 0; //Encoder triggers/ms
 float triggers_pm = 0;
 float encoder_rpm = 0;
 float actual_rpm = 0;
@@ -85,22 +87,26 @@ bool actual_polarity = 0;
 
 bool Calculate_Actual_RPM(void *){
 
+//scaling in 12.5's
+
   triggers_pm = (A_count_per_ms*(1000/TIMER_RATE))*60;
-  encoder_rpm = (triggers_pm/48);
-  actual_rpm =  encoder_rpm / ENC_COUNT_REV;
+  encoder_rpm = (triggers_pm/12);
+  actual_rpm =  encoder_rpm / 368.763;
 
   if (actual_polarity) {
     actual_rpm = -actual_rpm;  
   }
-  
+
+  A_count_per_ms2 = A_count_per_ms;
   A_count_per_ms = 0;
+   
   
   return true; // keep timer active? true
 }
 
 
 //https://github.com/contrem/arduino-timer
-//Called by the Interrupt
+//Called by the Interrupt for A_Rising
 void A_Channel_Incrementor(){
   A_button_time = micros();//millis() //millisecconds 
   
@@ -123,49 +129,41 @@ void A_Channel_Incrementor(){
 }
 
 
-
-
-//BRANCH: Feedback
-
 // Encoder output to Arduino Interrupt pin 2 and 3
 // A - - A A - - A
 // B B - - B B - -
-
-// Update motor position
-int newposition = 0;
-int oldposition;
-int newtime = 0;
-int oldtime;
-
-// Calculate speed
-float Speed_Calculation() {
-	newposition = encoder0Pos;
-	newtime = millis();
-	
-	float position_difference =(float)(newposition - oldposition);
-	//Serial.print ("P_Dif(" + String(position_difference) + ") | ");
-
-	float time_difference = (float)(newtime - oldtime);
-	//Serial.print ("T_Dif(" + String(time_difference ) + ") | ");
-	
-	float interupts_per_sec = (float)((position_difference * 1000)/time_difference);
-	//Serial.print ("IPS(" + String(interupts_per_sec) + ") | ");
-
-	float interupts_per_min = (float) interupts_per_sec * 60;
-	//Serial.print ("IPM(" + String(interupts_per_min) + ") | ");
-
-	float actual_rpm = (float)interupts_per_min / ENC_COUNT_REV;
-	//Serial.print ("ACT(" + String(actual_rpm) + ") | ");
-	
-	oldposition = newposition;
-	oldtime = newtime;
-	
-	return actual_rpm;
-}
-
-
-
-
+//
+//// Update motor position
+//int newposition = 0;
+//int oldposition;
+//int newtime = 0;
+//int oldtime;
+//
+//// Calculate speed
+//float Speed_Calculation() {
+//	newposition = encoder0Pos;
+//	newtime = millis();
+//	
+//	float position_difference =(float)(newposition - oldposition);
+//	//Serial.print ("P_Dif(" + String(position_difference) + ") | ");
+//
+//	float time_difference = (float)(newtime - oldtime);
+//	//Serial.print ("T_Dif(" + String(time_difference ) + ") | ");
+//	
+//	float interupts_per_sec = (float)((position_difference * 1000)/time_difference);
+//	//Serial.print ("IPS(" + String(interupts_per_sec) + ") | ");
+//
+//	float interupts_per_min = (float) interupts_per_sec * 60;
+//	//Serial.print ("IPM(" + String(interupts_per_min) + ") | ");
+//
+//	float actual_rpm = (float)interupts_per_min / ENC_COUNT_REV;
+//	//Serial.print ("ACT(" + String(actual_rpm) + ") | ");
+//	
+//	oldposition = newposition;
+//	oldtime = newtime;
+//	
+//	return actual_rpm;
+//}
 
 
 //BRANCH: Merged
@@ -244,9 +242,15 @@ void loop() {
 	float duty = PID_Controller(ideal_rpm, error_rpm); //global: [pk, ik, dk]
 	
 	
-	Engine_Controller(duty);
+	Engine_Controller(ideal_rpm);
 
-	Serial.print ("E_RPM," + String(encoder_rpm) + " ,");
+
+  Serial.print ("A_COUNT," + String(A_count_per_ms) + " ,");
+  Serial.print ("A_COUNT2," + String(A_count_per_ms2) + " ,");
+  Serial.print ("TIME," + String(TIMER_RATE) + " ,");
+  Serial.print ("T_PM," + String(triggers_pm) + " ,");
+
+  Serial.print ("E_RPM," + String(encoder_rpm) + " ,");
 	Serial.print ("RPM(i:," + String(ideal_rpm) + ",|a:," + String(actual_rpm) + ",|e:," + String(error_rpm) + ",) | ,");
 	Serial.print ("DUTY(," + String(duty) + ",) | ,");
 	Serial.println();
